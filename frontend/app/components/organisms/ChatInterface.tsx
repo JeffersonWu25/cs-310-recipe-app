@@ -7,7 +7,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { ChatMessage } from "../molecules/ChatMessage";
 import { usePantry } from "../../context/PantryContext";
-import { getChatResponse, generateRecipes } from "../../utils/mockApi";
+import { sendChat } from "../../utils/api";
 
 export function ChatInterface() {
   const { ingredients, chatHistory, addChatMessage, setRecipes } = usePantry();
@@ -38,9 +38,7 @@ export function ChatInterface() {
     setIsLoading(true);
 
     try {
-      const ingredientNames = ingredients.map((ing) => ing.name);
-
-      const response = await getChatResponse(message, ingredientNames);
+      const { response, recipes } = await sendChat(message, chatHistory, ingredients);
 
       const assistantMessage = {
         id: (Date.now() + 1).toString(),
@@ -51,12 +49,7 @@ export function ChatInterface() {
 
       addChatMessage(assistantMessage);
 
-      if (
-        message.toLowerCase().includes("recipe") ||
-        message.toLowerCase().includes("what can i make") ||
-        message.toLowerCase().includes("show")
-      ) {
-        const recipes = await generateRecipes(ingredientNames);
+      if (recipes) {
         setRecipes(recipes);
       }
     } catch (error) {

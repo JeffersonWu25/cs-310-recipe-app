@@ -3,3 +3,5 @@ mangum
 pymysql
 pydantic
 uvicorn
+google-genai
+python-dotenv

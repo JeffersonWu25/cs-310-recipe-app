@@ -1,4 +1,58 @@
-import { Ingredient } from "../context/PantryContext";
+import { Ingredient, Recipe, ChatMessage } from "../context/PantryContext";
+
+export interface ChatApiResponse {
+  response: string;
+  recipes: {
+    name: string;
+    description: string;
+    difficulty: string;
+    time: number;
+    servings: number;
+    have_ingredients: string[];
+    missing_ingredients: string[];
+    instructions: string[];
+  }[] | null;
+}
+
+export async function sendChat(
+  query: string,
+  messages: ChatMessage[],
+  ingredients: Ingredient[]
+): Promise<{ response: string; recipes: Recipe[] | null }> {
+  const res = await fetch(`${BASE_URL}/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      query,
+      messages: messages.map((m) => ({ role: m.role, content: m.content })),
+      ingredients: ingredients.map((ing) => ({
+        id: parseInt(ing.id),
+        ingredient_name: ing.name,
+        category: ing.category,
+        quantity: parseInt(ing.quantity),
+        unit: ing.unit,
+      })),
+    }),
+  });
+  if (!res.ok) throw new Error("Failed to send chat");
+  const data: ChatApiResponse = await res.json();
+
+  const recipes: Recipe[] | null = data.recipes
+    ? data.recipes.map((r, i) => ({
+        id: `recipe-${i}`,
+        name: r.name,
+        description: r.description,
+        ingredients: r.have_ingredients,
+        missingIngredients: r.missing_ingredients,
+        prepTime: `${r.time} mins`,
+        difficulty: r.difficulty,
+        servings: r.servings,
+        instructions: r.instructions,
+      }))
+    : null;
+
+  return { response: data.response, recipes };
+}
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 

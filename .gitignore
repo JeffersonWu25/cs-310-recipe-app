@@ -1,0 +1,21 @@
+# Claude
+CLAUDE.md
+
+# Credentials & config
+backend/recipe-app.ini
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+.pytest_cache/
+
+# macOS
+.DS_Store

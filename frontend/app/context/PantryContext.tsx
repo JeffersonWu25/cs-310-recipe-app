@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import {
+  fetchIngredients,
+  createIngredient,
+  deleteIngredient,
+  updateIngredient,
+} from "../utils/api";
 
 export interface Ingredient {
   id: string;
@@ -40,9 +46,10 @@ export interface ChatMessage {
 
 interface PantryContextType {
   ingredients: Ingredient[];
-  addIngredient: (ingredient: Omit<Ingredient, "id">) => void;
-  removeIngredient: (id: string) => void;
-  updateIngredient: (id: string, ingredient: Partial<Ingredient>) => void;
+  loading: boolean;
+  addIngredient: (ingredient: Omit<Ingredient, "id">) => Promise<void>;
+  removeIngredient: (id: string) => Promise<void>;
+  updateIngredient: (id: string, ingredient: Partial<Ingredient>) => Promise<void>;
   clearPantry: () => void;
   recipes: Recipe[];
   setRecipes: (recipes: Recipe[]) => void;
@@ -57,64 +64,33 @@ interface PantryContextType {
 const PantryContext = createContext<PantryContextType | undefined>(undefined);
 
 export function PantryProvider({ children }: { children: ReactNode }) {
-  const [ingredients, setIngredients] = useState<Ingredient[]>([
-    {
-      id: "1",
-      name: "Chicken Breast",
-      quantity: "2",
-      unit: "lbs",
-      category: "Protein",
-    },
-    {
-      id: "2",
-      name: "Pasta",
-      quantity: "1",
-      unit: "box",
-      category: "Grains",
-    },
-    {
-      id: "3",
-      name: "Tomatoes",
-      quantity: "5",
-      unit: "pieces",
-      category: "Vegetables",
-    },
-    {
-      id: "4",
-      name: "Garlic",
-      quantity: "6",
-      unit: "cloves",
-      category: "Vegetables",
-    },
-    {
-      id: "5",
-      name: "Olive Oil",
-      quantity: "1",
-      unit: "bottle",
-      category: "Oils",
-    },
-  ]);
-
+  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+  const [loading, setLoading] = useState(true);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [shoppingList, setShoppingList] = useState<ShoppingItem[]>([]);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
 
-  const addIngredient = (ingredient: Omit<Ingredient, "id">) => {
-    const newIngredient: Ingredient = {
-      ...ingredient,
-      id: Date.now().toString(),
-    };
-    setIngredients((prev) => [...prev, newIngredient]);
+  useEffect(() => {
+    fetchIngredients()
+      .then(setIngredients)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const addIngredient = async (ingredient: Omit<Ingredient, "id">) => {
+    const created = await createIngredient(ingredient);
+    setIngredients((prev) => [...prev, created]);
   };
 
-  const removeIngredient = (id: string) => {
+  const removeIngredient = async (id: string) => {
+    await deleteIngredient(id);
     setIngredients((prev) => prev.filter((item) => item.id !== id));
   };
 
-  const updateIngredient = (id: string, updates: Partial<Ingredient>) => {
+  const updateIngredientFn = async (id: string, updates: Partial<Ingredient>) => {
+    const updated = await updateIngredient(id, updates);
     setIngredients((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, ...updates } : item))
+      prev.map((item) => (item.id === id ? updated : item))
     );
   };
 
@@ -130,9 +106,10 @@ export function PantryProvider({ children }: { children: ReactNode }) {
     <PantryContext.Provider
       value={{
         ingredients,
+        loading,
         addIngredient,
         removeIngredient,
-        updateIngredient,
+        updateIngredient: updateIngredientFn,
         clearPantry,
         recipes,
         setRecipes,

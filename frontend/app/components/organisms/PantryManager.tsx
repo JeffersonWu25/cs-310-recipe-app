@@ -22,10 +22,10 @@ export function PantryManager() {
     category: "Vegetables",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newIngredient.name && newIngredient.quantity) {
-      addIngredient(newIngredient);
+      await addIngredient(newIngredient);
       setNewIngredient({
         name: "",
         quantity: "",

@@ -1,6 +1,6 @@
 "use client";
 
-import { ChefHat, Loader2 } from "lucide-react";
+import { ChefHat } from "lucide-react";
 import { RecipeCard } from "../molecules/RecipeCard";
 import { SectionHeader } from "../atoms/SectionHeader";
 import { usePantry } from "../../context/PantryContext";
@@ -10,28 +10,53 @@ import { Recipe } from "../../context/PantryContext";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { Separator } from "../ui/separator";
+import { fetchKrogerShopping } from "../../utils/api";
 
 export function RecipeList() {
-  const { recipes, setSelectedRecipe, setShoppingList } = usePantry();
+  const {
+    recipes,
+    setSelectedRecipe,
+    setKrogerResult,
+    setKrogerLoading,
+    setKrogerError,
+  } = usePantry();
   const [detailsDialog, setDetailsDialog] = useState<Recipe | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
 
-  const handleSelectRecipe = async (recipe: Recipe) => {
-    setIsGenerating(true);
+  const handleSelectRecipe = (recipe: Recipe) => {
     setSelectedRecipe(recipe);
+    setKrogerResult(null);
+    setKrogerError(null);
+    setKrogerLoading(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Scroll to section immediately so skeleton is visible
+    setTimeout(() => {
+      document
+        .getElementById("shopping-list-section")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
 
-    const { generateShoppingList } = await import("../../utils/mockApi");
-    const shoppingList = await generateShoppingList(recipe.missingIngredients);
-    setShoppingList(shoppingList);
-
-    setIsGenerating(false);
-
-    const shoppingSection = document.getElementById("shopping-list-section");
-    if (shoppingSection) {
-      shoppingSection.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const result = await fetchKrogerShopping(
+            position.coords.latitude,
+            position.coords.longitude,
+            recipe.missingIngredients
+          );
+          setKrogerResult(result);
+        } catch {
+          setKrogerError("Failed to fetch Kroger data. Please try again.");
+        } finally {
+          setKrogerLoading(false);
+        }
+      },
+      () => {
+        setKrogerLoading(false);
+        setKrogerError(
+          "Location access is required to find nearby Kroger stores. Please enable location access in your browser and try again."
+        );
+      }
+    );
   };
 
   const handleViewDetails = (recipe: Recipe) => {
@@ -61,15 +86,6 @@ export function RecipeList() {
             />
           ))}
         </div>
-
-        {isGenerating && (
-          <div className="flex items-center justify-center gap-2 p-6 bg-blue-50 border border-blue-200 rounded-lg">
-            <Loader2 className="size-5 animate-spin text-blue-600" />
-            <span className="text-blue-700 font-medium">
-              Generating shopping list...
-            </span>
-          </div>
-        )}
       </section>
 
       {/* Recipe Details Dialog */}

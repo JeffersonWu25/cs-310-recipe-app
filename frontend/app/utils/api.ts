@@ -1,4 +1,4 @@
-import { Ingredient, Recipe, ChatMessage } from "../context/PantryContext";
+import { Ingredient, Recipe, ChatMessage, KrogerShoppingResult } from "../context/PantryContext";
 
 export interface ChatApiResponse {
   response: string;
@@ -121,4 +121,18 @@ export async function updateIngredient(
   });
   if (!res.ok) throw new Error("Failed to update ingredient");
   return fromApi(await res.json());
+}
+
+export async function fetchKrogerShopping(
+  lat: number,
+  lon: number,
+  missingItems: string[]
+): Promise<KrogerShoppingResult> {
+  const res = await fetch(`${BASE_URL}/shopping/kroger`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ lat, lon, missing_items: missingItems }),
+  });
+  if (!res.ok) throw new Error("Failed to fetch Kroger shopping data");
+  return res.json();
 }

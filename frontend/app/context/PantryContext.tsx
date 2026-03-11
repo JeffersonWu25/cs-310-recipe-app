@@ -37,6 +37,26 @@ export interface ShoppingItem {
   price?: string;
 }
 
+export interface KrogerProductResult {
+  item_name: string;
+  found: boolean;
+  product_name: string | null;
+  price: number | null;
+  delivery_eligible: boolean;
+}
+
+export interface KrogerStoreResult {
+  location_id: string;
+  name: string;
+  address: string;
+  products: KrogerProductResult[];
+}
+
+export interface KrogerShoppingResult {
+  stores: KrogerStoreResult[];
+  message: string | null;
+}
+
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
@@ -57,6 +77,12 @@ interface PantryContextType {
   setSelectedRecipe: (recipe: Recipe | null) => void;
   shoppingList: ShoppingItem[];
   setShoppingList: (items: ShoppingItem[]) => void;
+  krogerResult: KrogerShoppingResult | null;
+  setKrogerResult: (r: KrogerShoppingResult | null) => void;
+  krogerLoading: boolean;
+  setKrogerLoading: (v: boolean) => void;
+  krogerError: string | null;
+  setKrogerError: (e: string | null) => void;
   chatHistory: ChatMessage[];
   addChatMessage: (message: ChatMessage) => void;
 }
@@ -69,6 +95,9 @@ export function PantryProvider({ children }: { children: ReactNode }) {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [shoppingList, setShoppingList] = useState<ShoppingItem[]>([]);
+  const [krogerResult, setKrogerResult] = useState<KrogerShoppingResult | null>(null);
+  const [krogerLoading, setKrogerLoading] = useState(false);
+  const [krogerError, setKrogerError] = useState<string | null>(null);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
 
   useEffect(() => {
@@ -117,6 +146,12 @@ export function PantryProvider({ children }: { children: ReactNode }) {
         setSelectedRecipe,
         shoppingList,
         setShoppingList,
+        krogerResult,
+        setKrogerResult,
+        krogerLoading,
+        setKrogerLoading,
+        krogerError,
+        setKrogerError,
         chatHistory,
         addChatMessage,
       }}

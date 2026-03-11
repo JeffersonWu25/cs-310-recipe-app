@@ -57,6 +57,16 @@ export interface KrogerShoppingResult {
   message: string | null;
 }
 
+export interface RestaurantResult {
+  name: string;
+  address: string;
+  rating: number | null;
+  total_ratings: number | null;
+  price_level: number | null;
+  open_now: boolean | null;
+  maps_url: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
@@ -83,6 +93,12 @@ interface PantryContextType {
   setKrogerLoading: (v: boolean) => void;
   krogerError: string | null;
   setKrogerError: (e: string | null) => void;
+  restaurants: RestaurantResult[];
+  setRestaurants: (r: RestaurantResult[]) => void;
+  restaurantsLoading: boolean;
+  setRestaurantsLoading: (v: boolean) => void;
+  restaurantsError: string | null;
+  setRestaurantsError: (e: string | null) => void;
   chatHistory: ChatMessage[];
   addChatMessage: (message: ChatMessage) => void;
 }
@@ -98,6 +114,9 @@ export function PantryProvider({ children }: { children: ReactNode }) {
   const [krogerResult, setKrogerResult] = useState<KrogerShoppingResult | null>(null);
   const [krogerLoading, setKrogerLoading] = useState(false);
   const [krogerError, setKrogerError] = useState<string | null>(null);
+  const [restaurants, setRestaurants] = useState<RestaurantResult[]>([]);
+  const [restaurantsLoading, setRestaurantsLoading] = useState(false);
+  const [restaurantsError, setRestaurantsError] = useState<string | null>(null);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
 
   useEffect(() => {
@@ -152,6 +171,12 @@ export function PantryProvider({ children }: { children: ReactNode }) {
         setKrogerLoading,
         krogerError,
         setKrogerError,
+        restaurants,
+        setRestaurants,
+        restaurantsLoading,
+        setRestaurantsLoading,
+        restaurantsError,
+        setRestaurantsError,
         chatHistory,
         addChatMessage,
       }}

@@ -1,6 +1,6 @@
 "use client";
 
-import { MapPin, Truck, X, AlertCircle, ShoppingBag, Package } from "lucide-react";
+import { MapPin, Truck, X, AlertCircle, ShoppingBag, Package, UtensilsCrossed } from "lucide-react";
 import {
   Card,
   CardHeader,
@@ -11,8 +11,9 @@ import {
 import { Badge } from "../ui/badge";
 import { Alert, AlertDescription } from "../ui/alert";
 import { usePantry, KrogerStoreResult } from "../../context/PantryContext";
+import { RestaurantCard } from "../molecules/RestaurantCard";
 
-// --- Skeletons ---
+// --- Kroger Skeletons ---
 
 function ProductRowSkeleton() {
   return (
@@ -47,7 +48,7 @@ function StoreCardSkeleton({ itemCount }: { itemCount: number }) {
   );
 }
 
-// --- Store card ---
+// --- Kroger Store Card ---
 
 function StoreCard({ store }: { store: KrogerStoreResult }) {
   const total = store.products.reduce((sum, p) => sum + (p.price ?? 0), 0);
@@ -79,16 +80,10 @@ function StoreCard({ store }: { store: KrogerStoreResult }) {
       <CardContent>
         <div className="divide-y">
           {store.products.map((product) => (
-            <div
-              key={product.item_name}
-              className="flex items-center gap-3 py-2.5"
-            >
-              {/* Searched item name */}
+            <div key={product.item_name} className="flex items-center gap-3 py-2.5">
               <span className="w-24 text-sm font-medium text-gray-700 capitalize shrink-0 truncate">
                 {product.item_name}
               </span>
-
-              {/* Product name found */}
               <span className="flex-1 text-xs text-gray-500 truncate min-w-0">
                 {product.found && product.product_name ? (
                   product.product_name
@@ -96,13 +91,9 @@ function StoreCard({ store }: { store: KrogerStoreResult }) {
                   <span className="italic text-gray-400">Not available</span>
                 )}
               </span>
-
-              {/* Price */}
               <span className="w-12 text-sm font-semibold text-right shrink-0">
                 {product.price != null ? `$${product.price.toFixed(2)}` : "—"}
               </span>
-
-              {/* Delivery badge */}
               <div className="w-[88px] flex justify-end shrink-0">
                 {product.found ? (
                   product.delivery_eligible ? (
@@ -111,19 +102,13 @@ function StoreCard({ store }: { store: KrogerStoreResult }) {
                       Delivery
                     </Badge>
                   ) : (
-                    <Badge
-                      variant="secondary"
-                      className="bg-gray-100 text-gray-500 text-xs font-normal"
-                    >
+                    <Badge variant="secondary" className="bg-gray-100 text-gray-500 text-xs font-normal">
                       <X className="size-3 mr-1" />
                       No Delivery
                     </Badge>
                   )
                 ) : (
-                  <Badge
-                    variant="secondary"
-                    className="bg-red-50 text-red-500 text-xs font-normal"
-                  >
+                  <Badge variant="secondary" className="bg-red-50 text-red-500 text-xs font-normal">
                     Not Found
                   </Badge>
                 )}
@@ -131,13 +116,10 @@ function StoreCard({ store }: { store: KrogerStoreResult }) {
             </div>
           ))}
         </div>
-
         {total > 0 && (
           <div className="flex items-center justify-between pt-3 mt-1 border-t">
             <span className="text-sm text-gray-500">Estimated Total</span>
-            <span className="text-base font-bold text-green-600">
-              ${total.toFixed(2)}
-            </span>
+            <span className="text-base font-bold text-green-600">${total.toFixed(2)}</span>
           </div>
         )}
       </CardContent>
@@ -145,66 +127,115 @@ function StoreCard({ store }: { store: KrogerStoreResult }) {
   );
 }
 
+// --- Restaurant carousel skeletons ---
+
+function RestaurantCardSkeleton() {
+  return (
+    <div className="w-60 shrink-0 animate-pulse rounded-lg border bg-white p-4 flex flex-col gap-3">
+      <div className="flex justify-between">
+        <div className="h-5 w-14 bg-gray-200 rounded-full" />
+        <div className="h-4 w-8 bg-gray-200 rounded" />
+      </div>
+      <div className="h-4 w-40 bg-gray-200 rounded" />
+      <div className="h-3 w-36 bg-gray-200 rounded" />
+      <div className="h-3 w-24 bg-gray-200 rounded mt-auto" />
+    </div>
+  );
+}
+
 // --- Main section ---
 
 export function ShoppingListSection() {
-  const { selectedRecipe, krogerResult, krogerLoading, krogerError } =
-    usePantry();
+  const {
+    selectedRecipe,
+    krogerResult,
+    krogerLoading,
+    krogerError,
+    restaurants,
+    restaurantsLoading,
+  } = usePantry();
 
   if (!selectedRecipe) return null;
-  if (!krogerLoading && !krogerResult && !krogerError) return null;
+  if (!krogerLoading && !krogerResult && !krogerError && !restaurantsLoading && restaurants.length === 0) return null;
 
   const itemCount = selectedRecipe.missingIngredients.length;
+  const showRestaurantSection = restaurantsLoading || restaurants.length > 0;
 
   return (
-    <section id="shopping-list-section" className="space-y-5">
-      <div className="flex items-center gap-2">
-        <ShoppingBag className="size-6 text-blue-600" />
-        <h2 className="text-2xl font-bold">
-          Get Ingredients for {selectedRecipe.name}
-        </h2>
+    <section id="shopping-list-section" className="space-y-8">
+      {/* ── Kroger section ── */}
+      <div className="space-y-5">
+        <div className="flex items-center gap-2">
+          <ShoppingBag className="size-6 text-blue-600" />
+          <h2 className="text-2xl font-bold">
+            Get Ingredients for {selectedRecipe.name}
+          </h2>
+        </div>
+
+        {/* Error */}
+        {krogerError && (
+          <Alert className="bg-red-50 border-red-200">
+            <AlertCircle className="size-4 text-red-600" />
+            <AlertDescription className="ml-2 text-red-800">
+              {krogerError}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Loading skeleton */}
+        {krogerLoading && (
+          <div className="space-y-3">
+            <p className="text-sm text-gray-400 animate-pulse">
+              Finding nearby Kroger stores and checking availability…
+            </p>
+            <div className="grid gap-4 lg:grid-cols-3">
+              <StoreCardSkeleton itemCount={itemCount} />
+              <StoreCardSkeleton itemCount={itemCount} />
+              <StoreCardSkeleton itemCount={itemCount} />
+            </div>
+          </div>
+        )}
+
+        {/* No stores found */}
+        {krogerResult && krogerResult.stores.length === 0 && krogerResult.message && (
+          <Alert className="bg-amber-50 border-amber-200">
+            <Package className="size-4 text-amber-600" />
+            <AlertDescription className="ml-2 text-amber-800">
+              {krogerResult.message}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Store results */}
+        {krogerResult && krogerResult.stores.length > 0 && (
+          <div className="grid gap-4 lg:grid-cols-3">
+            {krogerResult.stores.map((store) => (
+              <StoreCard key={store.location_id} store={store} />
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Error */}
-      {krogerError && (
-        <Alert className="bg-red-50 border-red-200">
-          <AlertCircle className="size-4 text-red-600" />
-          <AlertDescription className="ml-2 text-red-800">
-            {krogerError}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Loading skeleton */}
-      {krogerLoading && (
-        <div className="space-y-3">
-          <p className="text-sm text-gray-400 animate-pulse">
-            Finding nearby Kroger stores and checking availability…
-          </p>
-          <div className="grid gap-4 lg:grid-cols-3">
-            <StoreCardSkeleton itemCount={itemCount} />
-            <StoreCardSkeleton itemCount={itemCount} />
-            <StoreCardSkeleton itemCount={itemCount} />
+      {/* ── Restaurants carousel ── */}
+      {showRestaurantSection && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <UtensilsCrossed className="size-5 text-orange-500" />
+            <h3 className="text-xl font-semibold">Or just go out to eat</h3>
+            <span className="text-sm text-gray-400">— top-rated spots near you</span>
           </div>
-        </div>
-      )}
 
-      {/* No stores found */}
-      {krogerResult && krogerResult.stores.length === 0 && krogerResult.message && (
-        <Alert className="bg-amber-50 border-amber-200">
-          <Package className="size-4 text-amber-600" />
-          <AlertDescription className="ml-2 text-amber-800">
-            {krogerResult.message}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Store results */}
-      {krogerResult && krogerResult.stores.length > 0 && (
-        <div className="grid gap-4 lg:grid-cols-3">
-          {krogerResult.stores.map((store) => (
-            <StoreCard key={store.location_id} store={store} />
-          ))}
+          <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory">
+            {restaurantsLoading
+              ? Array.from({ length: 4 }).map((_, i) => (
+                  <RestaurantCardSkeleton key={i} />
+                ))
+              : restaurants.map((r, i) => (
+                  <div key={i} className="snap-start">
+                    <RestaurantCard restaurant={r} />
+                  </div>
+                ))}
+          </div>
         </div>
       )}
     </section>

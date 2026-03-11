@@ -1,4 +1,4 @@
-import { Ingredient, Recipe, ChatMessage, KrogerShoppingResult } from "../context/PantryContext";
+import { Ingredient, Recipe, ChatMessage, KrogerShoppingResult, RestaurantResult } from "../context/PantryContext";
 
 export interface ChatApiResponse {
   response: string;
@@ -134,5 +134,14 @@ export async function fetchKrogerShopping(
     body: JSON.stringify({ lat, lon, missing_items: missingItems }),
   });
   if (!res.ok) throw new Error("Failed to fetch Kroger shopping data");
+  return res.json();
+}
+
+export async function fetchNearbyRestaurants(
+  lat: number,
+  lon: number
+): Promise<RestaurantResult[]> {
+  const res = await fetch(`${BASE_URL}/restaurants/nearby?lat=${lat}&lon=${lon}`);
+  if (!res.ok) throw new Error("Failed to fetch nearby restaurants");
   return res.json();
 }

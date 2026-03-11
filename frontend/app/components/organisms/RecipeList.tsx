@@ -10,7 +10,7 @@ import { Recipe } from "../../context/PantryContext";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { Separator } from "../ui/separator";
-import { fetchKrogerShopping } from "../../utils/api";
+import { fetchKrogerShopping, fetchNearbyRestaurants } from "../../utils/api";
 
 export function RecipeList() {
   const {
@@ -19,16 +19,23 @@ export function RecipeList() {
     setKrogerResult,
     setKrogerLoading,
     setKrogerError,
+    setRestaurants,
+    setRestaurantsLoading,
+    setRestaurantsError,
   } = usePantry();
   const [detailsDialog, setDetailsDialog] = useState<Recipe | null>(null);
 
   const handleSelectRecipe = (recipe: Recipe) => {
     setSelectedRecipe(recipe);
+    // Reset all shopping state
     setKrogerResult(null);
     setKrogerError(null);
     setKrogerLoading(true);
+    setRestaurants([]);
+    setRestaurantsError(null);
+    setRestaurantsLoading(true);
 
-    // Scroll to section immediately so skeleton is visible
+    // Scroll immediately to show skeletons
     setTimeout(() => {
       document
         .getElementById("shopping-list-section")
@@ -36,25 +43,26 @@ export function RecipeList() {
     }, 50);
 
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        try {
-          const result = await fetchKrogerShopping(
-            position.coords.latitude,
-            position.coords.longitude,
-            recipe.missingIngredients
-          );
-          setKrogerResult(result);
-        } catch {
-          setKrogerError("Failed to fetch Kroger data. Please try again.");
-        } finally {
-          setKrogerLoading(false);
-        }
+      (position) => {
+        const { latitude: lat, longitude: lon } = position.coords;
+
+        // Kroger and restaurants fire independently — each updates as it resolves
+        fetchKrogerShopping(lat, lon, recipe.missingIngredients)
+          .then(setKrogerResult)
+          .catch(() => setKrogerError("Failed to fetch Kroger data. Please try again."))
+          .finally(() => setKrogerLoading(false));
+
+        fetchNearbyRestaurants(lat, lon)
+          .then(setRestaurants)
+          .catch(() => setRestaurantsError("Failed to fetch nearby restaurants."))
+          .finally(() => setRestaurantsLoading(false));
       },
       () => {
         setKrogerLoading(false);
         setKrogerError(
-          "Location access is required to find nearby Kroger stores. Please enable location access in your browser and try again."
+          "Location access is required to find nearby stores and restaurants. Please enable location access in your browser and try again."
         );
+        setRestaurantsLoading(false);
       }
     );
   };

@@ -1,11 +1,10 @@
-import configparser
 import os
+from dotenv import load_dotenv
 
-config = configparser.ConfigParser()
-config.read(os.path.join(os.path.dirname(__file__), "../recipe-app.ini"))
+load_dotenv()
 
-DB_HOST = config["rds"]["DB_HOST"]
-DB_PORT = config["rds"]["DB_PORT"]
-DB_NAME = config["rds"]["DB_NAME"]
-DB_USER = config["rds"]["DB_USER"]
-DB_PASSWORD = config["rds"]["DB_PASSWORD"]
+DB_HOST = os.environ["DB_HOST"]
+DB_PORT = os.environ["DB_PORT"]
+DB_NAME = os.environ["DB_NAME"]
+DB_USER = os.environ["DB_USER"]
+DB_PASSWORD = os.environ["DB_PASSWORD"]

@@ -19,3 +19,9 @@ dist/
 
 # macOS
 .DS_Store
+
+# Elastic Beanstalk Files
+create.bash
+delete.bash
+update.bash
+app.zip
